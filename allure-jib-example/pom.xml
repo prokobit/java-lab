@@ -1,0 +1,192 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>prokobit.io</groupId>
+    <artifactId>java-lab</artifactId>
+    <version>${revision}</version>
+  </parent>
+
+  <artifactId>allure-jib-example</artifactId>
+  <packaging>jar</packaging>
+  <version>${revision}</version>
+
+  <properties>
+    <allure.version>2.24.0</allure.version>
+    <aspectj.version>1.9.19</aspectj.version>
+  </properties>
+
+  <dependencies>
+    <!-- JUnit 5 dependencies -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-console-standalone</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    
+    <!-- Allure dependencies -->
+    <dependency>
+      <groupId>io.qameta.allure</groupId>
+      <artifactId>allure-junit5</artifactId>
+      <version>${allure.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.qameta.allure</groupId>
+      <artifactId>allure-java-commons</artifactId>
+      <version>${allure.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Maven Surefire Plugin with Allure integration -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>
+            -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+          </argLine>
+          <systemProperties>
+            <property>
+              <name>allure.results.directory</name>
+              <value>${project.build.directory}/allure-results</value>
+            </property>
+          </systemProperties>
+          <testFailureIgnore>true</testFailureIgnore>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      
+      <!-- Maven Compiler Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      
+      <!-- Maven Dependency Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/libs</outputDirectory>
+              <includeScope>runtime</includeScope>
+              <includeTypes>jar</includeTypes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-test-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/libs</outputDirectory>
+              <includeScope>test</includeScope>
+              <includeTypes>jar</includeTypes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <!-- Allure Maven Plugin -->
+      <plugin>
+        <groupId>io.qameta.allure</groupId>
+        <artifactId>allure-maven</artifactId>
+        <version>2.12.0</version>
+        <configuration>
+          <reportVersion>${allure.version}</reportVersion>
+          <resultsDirectory>/app/allure-results</resultsDirectory>
+          <reportDirectory>/app/allure-report</reportDirectory>
+        </configuration>
+
+      </plugin>
+      
+      <!-- JIB Plugin for Docker containerization -->
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <configuration>
+          <from>
+            <image>amazoncorretto:21</image>
+          </from>
+          <to>
+            <image>allure-jib-example:latest</image>
+          </to>
+          <extraDirectories>
+            <paths>
+              <path>
+                <from>target/test-classes</from>
+                <into>/app/test-classes</into>
+              </path>
+              <path>
+                <from>target/allure-commandline</from>
+                <into>/app/allure-commandline</into>
+              </path>
+              <path>
+                <from>scripts</from>
+                <into>/app</into>
+              </path>
+            </paths>
+            <permissions>
+              <permission>
+                <file>/app/run-tests-and-report.sh</file>
+                <mode>755</mode>
+              </permission>
+              <permission>
+                <file>/app/allure-commandline/bin/allure</file>
+                <mode>755</mode>
+              </permission>
+            </permissions>
+          </extraDirectories>
+          <container>
+            <entrypoint>
+              <arg>sh</arg>
+              <arg>-c</arg>
+              <arg>/app/run-tests-and-report.sh</arg>
+            </entrypoint>
+            <ports>
+              <port>8080</port>
+            </ports>
+          </container>
+        </configuration>
+        <executions>
+          <execution>
+            <id>build-docker-image</id>
+            <phase>install</phase>
+            <goals>
+              <goal>dockerBuild</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project> 
