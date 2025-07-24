@@ -1,4 +1,4 @@
-package demo;
+package io.prokobit.junit.jib;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,4 +26,4 @@ class AppTest {
         // Another failing test to show all tests run despite failures
         assertEquals("hello", "world", "This string comparison should fail");
     }
-}
+} 

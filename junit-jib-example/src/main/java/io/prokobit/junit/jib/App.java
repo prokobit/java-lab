@@ -1,4 +1,4 @@
-package demo;
+package io.prokobit.junit.jib;
 
 public class App {
     public static void main(String[] args) {
